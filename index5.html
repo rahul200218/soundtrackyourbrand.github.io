@@ -1,0 +1,8 @@
+<html>
+  <body>
+iframe.contentWindow.postMessage({ type: 'language', isoCode: '"><script>alert(1)</script>' }, '*');
+
+// Scroll to arbitrary positions (low impact but confirms no origin check)
+iframe.contentWindow.postMessage({ type: 'scroll', scrollYProportion: 0.5 }, '*');
+  </body>
+  </html>
