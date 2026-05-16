@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe id="testFrame" src="YOUR_PROXIED_PAGE_URL"></iframe>
+  <script>
+    const iframe = document.getElementById('testFrame');
+
+    iframe.addEventListener('load', () => {
+      // Language injection test - escaped to avoid breaking the script tag
+      iframe.contentWindow.postMessage({
+        type: 'language',
+        isoCode: '"><img src=x onerror=alert(1)>'
+      }, '*');
+
+      // Confirm no origin check via scroll
+      iframe.contentWindow.postMessage({
+        type: 'scroll',
+        scrollYProportion: 0.5
+      }, '*');
+    });
+  </script>
+</body>
+</html>
